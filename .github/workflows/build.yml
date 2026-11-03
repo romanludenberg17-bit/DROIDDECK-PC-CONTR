@@ -1,0 +1,54 @@
+name: DroidDeck PC build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zstd unzip python3
+          rustup toolchain install stable --profile minimal
+
+      - name: apply pc layer
+        run: python3 tools/pc_layer/apply.py upstream
+
+      - name: build ci-equivalent release apk
+        working-directory: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DROIDDECK_BUILD_VARIANT: release
+          DROIDDECK_GITHUB_REPOSITORY: Droid-Deck/DroidDeck
+        run: |
+          chmod +x tools/build_local.sh
+          tools/build_local.sh
+
+      - name: upload apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: DroidDeck-PC-0.6.9
+          path: upstream/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
