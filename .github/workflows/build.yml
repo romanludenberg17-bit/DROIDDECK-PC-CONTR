@@ -41,6 +41,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DROIDDECK_BUILD_VARIANT: release
           DROIDDECK_GITHUB_REPOSITORY: Droid-Deck/DroidDeck
+          RUST_TEST_THREADS: '1'
         run: |
           chmod +x tools/build_local.sh
           tools/build_local.sh
